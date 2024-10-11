@@ -1,3 +1,4 @@
+import 'package:ble_scanner_app/ble_controller.dart';
 import 'package:flutter/material.dart';
 
 void main() {
