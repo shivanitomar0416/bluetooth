@@ -1,5 +1,7 @@
-import 'package:ble_scanner_app/ble_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:bluetooth/blue_controller.dart';
+// Ensure this file exists and is correctly implemented
 
 void main() {
   runApp(const MyApp());
@@ -8,11 +10,10 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'BLE Scanner',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -22,62 +23,55 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("BLE SCANNER"),),
-        body: GetBuilder<BleController>(
-          init: BleController(),
-          builder: (BleController controller)
-          {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  StreamBuilder<List<ScanResult>>(
-                      stream: controller.scanResults,
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return Expanded(
-                            child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: snapshot.data!.length,
-                                itemBuilder: (context, index) {
-                                  final data = snapshot.data![index];
-                                  return Card(
-                                    elevation: 2,
-                                    child: ListTile(
-                                      title: Text(data.device.name),
-                                      subtitle: Text(data.device.id.id),
-                                      trailing: Text(data.rssi.toString()),
-                                      onTap: ()=> controller.connectToDevice(data.device),
-                                    ),
-                                  );
-                                }),
-                          );
-                        }else{
-                          return Center(child: Text("No Device Found"),);
-                        }
-                      }),
-                  SizedBox(height: 10,),
-                  ElevatedButton(onPressed: ()  async {
-                    controller.scanDevices();
-                    // await controller.disconnectDevice();
-                  }, child: Text("SCAN")),
-
-                ],
-              ),
-            );
-          },
-        )
+      appBar: AppBar(
+        title: const Text("BLE Scanner"),
+      ),
+      body: GetBuilder<BleController>(
+        init: BleController(),
+        builder: (BleController controller) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Obx(() { // Use Obx to listen for changes
+                    return ListView.builder(
+                      itemCount: controller.scanResults.length,
+                      itemBuilder: (context, index) {
+                        final data = controller.scanResults[index];
+                        return Card(
+                          elevation: 2,
+                          child: ListTile(
+                            title: Text(data.device.name.isNotEmpty
+                                ? data.device.name
+                                : 'Unnamed Device'),
+                            subtitle: Text(data.device.id.id),
+                            trailing: Text(data.rssi.toString()),
+                            onTap: () => controller.connectToDevice(data.device),
+                          ),
+                        );
+                      },
+                    );
+                  }),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () async {
+                    await controller.scanDevices();
+                  },
+                  child: const Text("SCAN"),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
